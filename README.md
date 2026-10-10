@@ -1,4 +1,4 @@
-﻿# â™»ï¸ NudgeBin: Enterprise Waste-to-Energy OS
+﻿ NudgeBin: Enterprise Waste-to-Energy OS
 
 <div align="center">
   <img src="https://img.shields.io/badge/Track-Waste_%26_Energy-10b981?style=for-the-badge&logo=leaf" alt="Track" />
@@ -10,19 +10,18 @@
 
 <br/>
 
-> **Hackathon Demo Video:** [Insert YouTube/Drive Link Here]  
-> **Live Web Dashboard:** [Insert AWS Amplify URL Here]  
 
+> **Live Web Dashboard:**   https://main.d1rrvh1o5pnpqr.amplifyapp.com/
 ---
 
-## ðŸš€ Executive Summary
+## Executive Summary
 Traditional municipal solid waste (MSW) management relies on static collection routes. Trucks dispatch on fixed schedules, often emptying bins that are only 10% full, wasting millions of liters of diesel annually and generating unnecessary COâ‚‚ emissions. Simultaneously, overflowing bins create localized health hazards and methane pockets.
 
 **NudgeBin** modernizes this infrastructure by merging **Behavioral Psychology at the Edge** with **Predictive Cloud Logistics**. It intercepts poor disposal habits in real-time via audio nudges while utilizing AWS Machine Learning to optimize collection fleets and forecast biogas energy generation.
 
 ---
 
-## ðŸ—ï¸ Deep-Dive Architecture & Workflow
+## Deep-Dive Architecture & Workflow
 
 NudgeBin operates across 5 distinct technical layers:
 
@@ -54,7 +53,7 @@ NudgeBin operates across 5 distinct technical layers:
 
 ---
 
-## ðŸ“Š The Math: Real-World Impact Formulas
+## The Math: Real-World Impact Formulas
 The dashboard translates raw integer data into actionable climate metrics. The backend utilizes the following algorithms per collection cycle:
 
 1.  **Fleet Optimization (Diesel Saved):**
@@ -66,7 +65,7 @@ The dashboard translates raw integer data into actionable climate metrics. The b
 
 ---
 
-## ðŸ“¡ API Contract (API Gateway -> Lambda)
+## API Contract (API Gateway -> Lambda)
 
 The backend expects standard JSON payloads from the IoT hardware. 
 
@@ -106,14 +105,14 @@ The backend expects standard JSON payloads from the IoT hardware.
 
 ---
 
-## ðŸ”’ Security & Cloud Governance
+##  Security & Cloud Governance
 
 * **IAM Least Privilege:** The Lambda execution role is strictly bound to `AmazonDynamoDBFullAccess` and `AmazonSNSFullAccess`. It cannot interact with unauthorized AWS resources.
 * **CORS Configuration:** API Gateway securely manages `OPTIONS` preflight requests, ensuring the React dashboard can fetch data cross-origin securely.
 
 ---
 
-## âš™ï¸ Local Installation & Development
+## Local Installation & Development
 
 To run the Enterprise Control Center locally:
 
@@ -143,7 +142,7 @@ npm run dev
 
 ---
 
-## ðŸ”® Future Scope
+## Future Scope
 
 * **LoRaWAN Integration:** Migrating from Wi-Fi to AWS IoT Core + LoRaWAN for city-wide deployments without cellular dependencies.
 * **Edge AI (TinyML):** Deploying a lightweight sound-classification model directly onto the ESP32 to detect glass breaking vs. plastic dropping, categorizing waste types at the source.
@@ -153,4 +152,5 @@ npm run dev
 **Designed & Architected by Akarshak Mishra**
 
 *Built for the Waste & Energy Track*
-
+
+
