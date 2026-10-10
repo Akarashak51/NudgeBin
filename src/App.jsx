@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Map, Zap, Database, Bell, Activity, Truck, Leaf, AlertTriangle, Server, Mail, CheckCircle, BrainCircuit, Sun, Moon } from 'lucide-react';
+import { Cloud, Map, Zap, Database, Bell, Activity, Truck, Leaf, AlertTriangle, Server, CheckCircle, BrainCircuit, Sun, Moon, ArrowRight, Cpu, Share2, Network } from 'lucide-react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import './App.css';
@@ -10,7 +10,7 @@ const API_URL = "https://9c5b03f314.execute-api.ap-southeast-2.amazonaws.com/Nud
 
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('nudgebin-theme') || 'dark');
-  const [activeTab, setActiveTab] = useState('command'); // State to control sidebar navigation
+  const [activeTab, setActiveTab] = useState('command');
   const [metrics, setMetrics] = useState({ diesel: 0, biogas: 0, co2: 0, fullBins: 0, totalBins: 0 });
   const [bins, setBins] = useState([]);
   const [logs, setLogs] = useState([{ time: new Date().toLocaleTimeString(), msg: "SYSTEM BOOT: Connected to AWS Cloud Pipeline", type: "normal" }]);
@@ -66,30 +66,28 @@ export default function App() {
     }]
   };
 
-  // --- RENDER FUNCTIONS FOR EACH TAB ---
-
   const renderCommandCenter = () => (
     <>
       <div className="kpi-grid">
         <div className="glass-panel kpi-card" style={{ animationDelay: '0.1s' }}>
           <div className="kpi-title"><Truck size={16} color="var(--accent-orange)" /> Diesel Conserved</div>
           <div className="kpi-value">{metrics.diesel} <span style={{fontSize:'1.2rem', color:'#94a3b8'}}>L</span></div>
-          <p style={{fontSize:'0.8rem', color:'#94a3b8'}}>Skipped stops via ML routing</p>
+          <p className="kpi-caption">Skipped stops via ML routing</p>
         </div>
         <div className="glass-panel kpi-card" style={{ animationDelay: '0.2s' }}>
           <div className="kpi-title"><Zap size={16} color="var(--accent-yellow)" /> Biogas Generated</div>
           <div className="kpi-value accent">{metrics.biogas} <span style={{fontSize:'1.2rem', color:'var(--accent-yellow)'}}>kWh</span></div>
-          <p style={{fontSize:'0.8rem', color:'#94a3b8'}}>Yield from organic waste</p>
+          <p className="kpi-caption">Yield from organic waste</p>
         </div>
         <div className="glass-panel kpi-card" style={{ animationDelay: '0.3s' }}>
           <div className="kpi-title"><Leaf size={16} color="var(--accent-pink)" /> CO₂ Mitigated</div>
           <div className="kpi-value" style={{background: 'linear-gradient(90deg, var(--accent-pink), var(--accent-red))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>{metrics.co2} <span style={{fontSize:'1.2rem', color:'var(--accent-pink)'}}>kg</span></div>
-          <p style={{fontSize:'0.8rem', color:'#94a3b8'}}>Reduced carbon footprint</p>
+          <p className="kpi-caption">Reduced carbon footprint</p>
         </div>
         <div className="glass-panel kpi-card" style={{ animationDelay: '0.4s' }}>
           <div className="kpi-title"><AlertTriangle size={16} color="var(--accent-red)" /> Dispatch Queue</div>
           <div className="kpi-value" style={{background: 'var(--accent-red)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>{metrics.fullBins} / {metrics.totalBins}</div>
-          <p style={{fontSize:'0.8rem', color:'#94a3b8'}}>Bins flagged ≥ 85% full</p>
+          <p className="kpi-caption">Bins flagged ≥ 85% full</p>
         </div>
       </div>
 
@@ -97,7 +95,7 @@ export default function App() {
         <div className="glass-panel" style={{ animationDelay: '0.5s' }}>
           <h2 className="panel-header"><Database size={20} color="var(--accent-orange)" /> Live Sensor Network</h2>
           <div className="fleet-grid">
-            {bins.length === 0 ? <p style={{color: 'var(--text-muted)'}}>Awaiting telemetry...</p> : null}
+            {bins.length === 0 ? <div className="telemetry-empty"><div className="empty-pulse"></div><span><strong>Awaiting Telemetry</strong><small>No hardware payloads received yet.</small></span></div> : null}
             {bins.map(bin => {
               const isFull = bin.fill_level >= 85;
               const color = isFull ? 'var(--danger)' : (bin.fill_level >= 60 ? 'var(--warning)' : 'var(--accent)');
@@ -106,7 +104,7 @@ export default function App() {
                   <div className="bin-top"><span className="bin-id">{bin.bin_id}</span><span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: color }}>{isFull ? 'DISPATCH READY' : 'OPTIMAL'}</span></div>
                   <div className="progress-bg"><div className="progress-fill" style={{ width: `${bin.fill_level}%`, backgroundColor: color }}></div></div>
                   <div style={{ display:'flex', justifyContent:'space-between', fontSize:'0.8rem', marginTop:'8px', color:'var(--text-muted)'}}>
-                    <span>Level: <strong style={{color:'#fff'}}>{bin.fill_level}%</strong></span><span>🔋 {bin.battery_voltage}V</span>
+                    <span className="bin-level">{bin.fill_level}% Full</span><span>🔋 {bin.battery_voltage}V</span>
                   </div>
                 </div>
               );
@@ -128,6 +126,58 @@ export default function App() {
         </div>
       </div>
     </>
+  );
+
+  const renderArchitectureFlow = () => (
+    <div className="glass-panel" style={{ animationDelay: '0.1s', minHeight: '60vh', display: 'flex', flexDirection: 'column' }}>
+      <h2 className="panel-header"><Network size={24} color="var(--accent-orange)" /> Serverless Pipeline Architecture</h2>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '40px' }}>Visualizing the event-driven telemetry flow mapped in the project README.</p>
+      
+      <div className="arch-flow-container">
+        {/* Hardware to Gateway */}
+        <div className="arch-node">
+          <Cpu size={36} color="var(--accent-pink)"/>
+          <strong>ESP32 Hardware</strong>
+          <small>Ultrasonic & Audio Nudges</small>
+        </div>
+        <ArrowRight className="arch-arrow" size={32} />
+        
+        {/* Gateway to Lambda */}
+        <div className="arch-node">
+          <Cloud size={36} color="var(--accent-yellow)"/>
+          <strong>API Gateway</strong>
+          <small>REST HTTP Endpoint</small>
+        </div>
+        <ArrowRight className="arch-arrow" size={32} />
+
+        {/* Lambda Processing */}
+        <div className="arch-node lambda-node">
+          <Share2 size={36} color="var(--accent-orange)"/>
+          <strong>AWS Lambda</strong>
+          <small>Python Core Logic</small>
+        </div>
+        <ArrowRight className="arch-arrow" size={32} />
+
+        {/* Branching to DB, SNS, and ML */}
+        <div className="arch-branch">
+          <div className="arch-node">
+            <Database size={32} color="var(--accent)"/>
+            <strong>DynamoDB</strong>
+            <small>Telemetry Storage</small>
+          </div>
+          <div className="arch-node">
+            <Bell size={32} color="var(--danger)"/>
+            <strong>Amazon SNS</strong>
+            <small>Dispatch Email Alerts</small>
+          </div>
+          <div className="arch-node">
+            <BrainCircuit size={32} color="var(--blue)"/>
+            <strong>SageMaker ML</strong>
+            <small>Energy Forecasting</small>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
   const renderDynamoDB = () => (
@@ -174,10 +224,10 @@ export default function App() {
           </div>
         </div>
         <div style={{ background: 'rgba(0,0,0,0.3)', padding: '24px', borderRadius: '12px', border: '1px solid var(--panel-border)' }}>
-          <h3 style={{ marginBottom: '16px', color: '#fff' }}>Model Metadata</h3>
-          <div className="config-item"><span className="label">Algorithm</span> <span className="value" style={{color:'#fff'}}>Random Forest</span></div>
-          <div className="config-item"><span className="label">Training Set Size</span> <span className="value" style={{color:'#fff'}}>1,000 Records</span></div>
-          <div className="config-item"><span className="label">Target Variable</span> <span className="value" style={{color:'#fff'}}>Hours to 85%</span></div>
+          <h3 style={{ marginBottom: '16px', color: 'inherit' }}>Model Metadata</h3>
+          <div className="config-item"><span className="label">Algorithm</span> <span className="value">Random Forest</span></div>
+          <div className="config-item"><span className="label">Training Set Size</span> <span className="value">1,000 Records</span></div>
+          <div className="config-item"><span className="label">Target Variable</span> <span className="value">Hours to 85%</span></div>
           <div className="config-item" style={{ borderBottom: 'none' }}><span className="label">Status</span> <span className="value" style={{color:'var(--accent)'}}><CheckCircle size={14}/> InService</span></div>
         </div>
       </div>
@@ -216,9 +266,26 @@ export default function App() {
       
       {/* SIDEBAR */}
       <aside className="sidebar">
-        <div className="brand"><div className="live-dot"></div>NudgeBin OS</div>
+        <div className="brand">
+          <div className="brand-mark"><Leaf size={18}/></div>
+          <div>
+            Nudge<span className="brand-light">Bin</span>
+            <small>ENTERPRISE OS</small>
+          </div>
+        </div>
+
+        <div className="region-card">
+          <div className="region-status"></div>
+          <span>
+            <strong>AWS AP-SOUTHEAST-2</strong>
+            <small>Sydney Region Connected</small>
+          </span>
+        </div>
+
+        <div className="nav-caption">CORE MODULES</div>
         <nav className="nav-links">
           <div className={`nav-item ${activeTab === 'command' ? 'active' : ''}`} onClick={() => setActiveTab('command')}><Activity size={20} /> Command Center</div>
+          <div className={`nav-item ${activeTab === 'architecture' ? 'active' : ''}`} onClick={() => setActiveTab('architecture')}><Network size={20} /> AWS Architecture Flow</div>
 
 <Map size={20} />
 <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}> Fleet Routing Map</div>
@@ -227,30 +294,49 @@ export default function App() {
           <div className={`nav-item ${activeTab === 'sns' ? 'active' : ''}`} onClick={() => setActiveTab('sns')}><Bell size={20} /> AWS SNS Config</div>
         </nav>
         
-        <div style={{ marginTop: 'auto' }}>
-          <button className="demo-btn" onClick={triggerSensor}><Cloud size={20} /> Inject API Payload</button>
+        <div className="sidebar-bottom">
+          <button className="demo-btn" onClick={triggerSensor}>
+            <Cloud size={16} /> 
+            Inject API Payload
+            <ArrowRight className="button-arrow" size={16} />
+          </button>
+          <p className="sidebar-note">Simulates hardware POST request</p>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="main-content">
         <div className="top-bar">
-          <div><h1>Energy & Climate Grid</h1><p>Akarshak Mishra | AWS Serverless Architecture</p></div>
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-            aria-pressed={theme === 'light'}
-          >
-            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-            <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-          </button>
-          <div className="aws-badge"><Server size={16} /> Live Connected</div>
+          <div className="page-heading">
+            <div className="page-eyebrow"><div className="eyebrow-dot"></div> <span>LIVE SYSTEM</span></div>
+            <h1>{activeTab === 'architecture' ? 'Architecture Flow' : activeTab === 'sagemaker' ? 'SageMaker ML' : activeTab === 'dynamodb' ? 'DynamoDB' : activeTab === 'sns' ? 'SNS Config' : activeTab === 'map' ? 'Routing Map' : 'Command Center'}</h1>
+            <p>Akarshak Mishra | Hardware-to-Cloud Integration</p>
+          </div>
+          
+          <div className="top-actions">
+            <button
+              className="theme-toggle"
+              type="button"
+              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+              aria-pressed={theme === 'light'}
+            >
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+              <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+            </button>
+            <div className="aws-badge">
+              <Server size={20} />
+              <span>
+                <strong>AWS Serverless</strong>
+                <small>Pipeline Connected</small>
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Dynamic View Rendering */}
         {activeTab === 'command' && renderCommandCenter()}
+        {activeTab === 'architecture' && renderArchitectureFlow()}
         {activeTab === 'map' && renderMap()}
         {activeTab === 'sagemaker' && renderSageMaker()}
         {activeTab === 'dynamodb' && renderDynamoDB()}
