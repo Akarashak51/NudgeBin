@@ -10,7 +10,8 @@
 
 <br/>
 
-
+> **Circuit Design(Wokwi Software):**  https://wokwi.com/projects/476707733910847489
+ 
 > **Live Web Dashboard:**   https://main.d1rrvh1o5pnpqr.amplifyapp.com/
 ---
 
