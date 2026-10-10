@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nudge Bin: virtual prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#E8EEF0;--panel:#F7FAFB;--ink:#13242B;--mute:#5A6E76;--line:#C5D2D7;--bin:#1F5FA8;--roof:#174A82;--ok:#2E8B57;--warn:#D98E00;--bad:#C2412D;--ground:#CDD8DC;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1A1F;--panel:#16252C;--ink:#E6EEF1;--mute:#93A7AF;--line:#2B3F48;--bin:#3D7FC8;--roof:#2C629E;--ok:#4FBF85;--warn:#F2B31F;--bad:#E8705D;--ground:#22343C}}
+:root[data-theme="dark"]{--bg:#0F1A1F;--panel:#16252C;--ink:#E6EEF1;--mute:#93A7AF;--line:#2B3F48;--bin:#3D7FC8;--roof:#2C629E;--ok:#4FBF85;--warn:#F2B31F;--bad:#E8705D;--ground:#22343C}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:clamp(1.7rem,4vw,2.5rem);font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 16px;max-width:62ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+#msgbar{display:flex;gap:10px;align-items:center;min-height:54px;padding:10px 14px;border-left:6px solid var(--line);font-weight:600;font-size:1.05rem}
+#msgbar[data-k=ok]{border-left-color:var(--ok)}#msgbar[data-k=warn]{border-left-color:var(--warn)}#msgbar[data-k=bad]{border-left-color:var(--bad)}
+#msg{flex:1}.idle{color:var(--mute);font-weight:400}
+svg{width:100%;height:auto;display:block}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-weight:600;padding:9px 13px;border-radius:8px;border:1px solid var(--ink);background:var(--panel);color:var(--ink);cursor:pointer}
+button:hover:not(:disabled){background:var(--ink);color:var(--panel)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+h2{font-size:1rem;margin:0 0 8px;font-weight:800}
+.chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.chip{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.chip small{display:block;color:var(--mute)}.chip b{font-size:1.05rem}
+.on{background:color-mix(in srgb,var(--warn) 25%,transparent)}
+.cut{background:color-mix(in srgb,var(--bad) 25%,transparent)}
+pre{margin:0;background:#0d1a20;color:#b8e3c9;padding:10px;border-radius:8px;height:190px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap}
+label{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.92rem;margin:4px 0}
+input[type=range]{width:55%}
+.rules{margin:0;padding-left:18px;color:var(--ink)}.rules li{margin:3px 0}
+.stat{display:flex;gap:16px;flex-wrap:wrap}.stat div{min-width:80px}.stat b{font-size:1.6rem;display:block;line-height:1.1}
+#beam{stroke:var(--warn);stroke-width:2;stroke-dasharray:4 3}#beam.cut{stroke:var(--bad);stroke-dasharray:none;stroke-width:3}
+.wave{display:none;fill:none;stroke:#fff;stroke-width:2;opacity:.8}.spk .wave{display:block;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.15}}
+@media(prefers-reduced-motion:reduce){.spk .wave{animation:none}}
+.lit{fill:var(--warn)}
+</style>
+</head>
+<body>
+<main>
+<h1>Nudge Bin: virtual prototype</h1>
+<p class="sub">A retrofit kit that thanks people who use the bin, nudges people who miss it, and redirects them when it is full. Press the buttons to see the same logic the ESP32 would run.</p>
+
+<div class="card" id="msgbar" data-k="">
+  <span aria-hidden="true">🔊</span><span id="msg" class="idle" aria-live="polite">Speaker is silent. Choose a scenario below.</span>
+</div>
+
+<div class="card">
+<svg id="scene" viewBox="0 0 720 250" role="img" aria-label="Street scene with a smart dustbin, two neighbouring bins and a person">
+  <rect x="0" y="210" width="720" height="40" fill="var(--ground)"/>
+  <rect x="230" y="206" width="260" height="4" fill="var(--warn)" opacity=".5"/>
+  <text x="360" y="246" text-anchor="middle" font-size="11" fill="var(--mute)">PIR detection zone</text>
+  <!-- neighbours -->
+  <g id="nA"><rect x="62" y="150" width="56" height="60" rx="4" fill="var(--bin)" opacity=".6"/><rect x="68" y="156" width="44" height="48" rx="3" fill="var(--panel)"/><rect id="gA" x="68" y="204" width="44" height="0" rx="3"/><text x="90" y="228" text-anchor="middle" font-size="11" fill="var(--ink)">Bin A · 50 steps left</text></g>
+  <g id="nB"><rect x="592" y="150" width="56" height="60" rx="4" fill="var(--bin)" opacity=".6"/><rect x="598" y="156" width="44" height="48" rx="3" fill="var(--panel)"/><rect id="gB" x="598" y="204" width="44" height="0" rx="3"/><text x="620" y="228" text-anchor="middle" font-size="11" fill="var(--ink)">Bin B · 120 steps right</text></g>
+  <!-- litter -->
+  <g id="lit"></g>
+  <!-- main bin -->
+  <g id="bin">
+    <polygon points="306,112 414,112 424,210 296,210" fill="var(--bin)"/>
+    <polygon points="300,112 360,82 420,112" fill="var(--roof)"/>
+    <rect x="336" y="110" width="48" height="8" fill="#0b1a2a"/>
+    <line id="beam" x1="336" y1="108" x2="384" y2="108"/>
+    <circle cx="336" cy="108" r="3" fill="var(--ink)"/><circle cx="384" cy="108" r="3" fill="var(--ink)"/>
+    <circle id="pirdot" cx="360" cy="98" r="5" fill="var(--mute)"/>
+    <rect x="334" y="136" width="52" height="66" rx="4" fill="var(--panel)"/>
+    <rect id="gM" x="334" y="202" width="52" height="0" rx="4"/>
+    <g id="dots" fill="#fff"><circle cx="350" cy="124" r="1.6"/><circle cx="360" cy="124" r="1.6"/><circle cx="370" cy="124" r="1.6"/></g>
+    <g id="waves"><circle class="wave" cx="360" cy="124" r="12"/><circle class="wave" cx="360" cy="124" r="20" style="animation-delay:.2s"/></g>
+    <text x="360" y="230" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">This bin</text>
+  </g>
+  <!-- person -->
+  <g id="person" transform="translate(-40,0)">
+    <circle cx="0" cy="156" r="10" fill="var(--ink)"/>
+    <line x1="0" y1="166" x2="0" y2="190" stroke="var(--ink)" stroke-width="8" stroke-linecap="round"/>
+    <line x1="0" y1="190" x2="-6" y2="209" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="190" x2="6" y2="209" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+    <line x1="0" y1="172" x2="14" y2="178" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+    <rect id="hand" x="12" y="172" width="8" height="8" rx="2" fill="var(--warn)"/>
+  </g>
+  <rect id="proj" width="8" height="8" rx="2" fill="var(--warn)" style="display:none"/>
+</svg>
+</div>
+
+<div class="card">
+  <h2>Scenarios</h2>
+  <div class="acts">
+    <button data-s="throw">1. Person throws trash in</button>
+    <button data-s="miss">2. Person drops it outside</button>
+    <button data-s="fix">3. Warned, then picks it up</button>
+    <button data-s="pass">4. Passer-by, no trash</button>
+    <button data-s="full">5. Arrives at a full bin</button>
+    <button id="reset">Reset</button>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Sensors on the ESP32</h2>
+    <div class="chips">
+      <div class="chip" id="c-pir"><small>PIR motion</small><b>Clear</b></div>
+      <div class="chip" id="c-ir"><small>IR break-beam</small><b>Clear</b></div>
+      <div class="chip" id="c-us"><small>Ultrasonic distance</small><b>-</b></div>
+      <div class="chip" id="c-sp"><small>DFPlayer speaker</small><b>Silent</b></div>
+    </div>
+    <h2 style="margin-top:14px">Decision rules</h2>
+    <ol class="rules">
+      <li>Beam broken while someone is near: play a <b>thank-you</b>.</li>
+      <li>Someone stays 3 s, beam never broken: play a <b>gentle warning</b>.</li>
+      <li>Someone passes in under 3 s: <b>stay silent</b>.</li>
+      <li>Fill at 85% or more: tell people the <b>nearest free bin</b>, using neighbour status.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>Serial monitor</h2>
+    <pre id="log" aria-label="Serial log"></pre>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Settings and bin fill</h2>
+    <label>Voice language <select id="lang"><option value="en">English</option><option value="hi">हिन्दी</option></select></label>
+    <label>Play sound in browser <input type="checkbox" id="snd" checked></label>
+    <label>This bin fill <input type="range" id="sM" min="0" max="100" value="30"><span id="vM">30%</span></label>
+    <label>Bin A fill <input type="range" id="sA" min="0" max="100" value="20"><span id="vA">20%</span></label>
+    <label>Bin B fill <input type="range" id="sB" min="0" max="100" value="50"><span id="vB">50%</span></label>
+  </div>
+  <div class="card">
+    <h2>What the city sees</h2>
+    <div class="stat">
+      <div><b id="nT">0</b>thank-yous</div>
+      <div><b id="nW">0</b>warnings</div>
+      <div><b id="nI">0</b>ignored passes</div>
+      <div><b id="nL">0</b>litter on street</div>
+    </div>
+    <p id="collect" style="margin:12px 0 0"></p>
+  </div>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id), T0=performance.now();
+const FULL=85, WARN_T=3000, BX=360;
+const F={m:30,a:20,b:50}, S={t:0,w:0,i:0};
+let pir=false,nearAt=0,thrown=false,warned=false,fullDone=false,timers=[],busy=false,px=-40,route=null,litter=[],sp,last={};
+const TXT={
+ en:{v:'en-IN',thanks:["Thank you for keeping our city clean!","Well done! Every piece counts.","Thanks! You just made this street cleaner."],
+  warn:["Please pick it up and use the bin. It keeps our city clean.","Oops, that missed. The bin is right here!","A small step from you is a big help for our street."],
+  full:(d,s)=>`This bin is full. Please walk ${s} steps ${d} to the next empty bin.`,
+  none:"All nearby bins are full. Please carry your waste for now. Collection has been alerted.",L:"to the left",R:"to the right",idle:"Speaker is silent. Choose a scenario below."},
+ hi:{v:'hi-IN',thanks:["धन्यवाद! हमारा शहर साफ़ रखने के लिए शुक्रिया।","शाबाश! हर एक टुकड़ा मायने रखता है।","धन्यवाद! आपने यह सड़क और साफ़ कर दी।"],
+  warn:["कृपया इसे उठाकर डस्टबिन में डालें। इससे शहर साफ़ रहता है।","अरे, कचरा बाहर गिर गया। डस्टबिन यहीं है!","आपका एक छोटा कदम हमारी गली को साफ़ रखेगा।"],
+  full:(d,s)=>`यह डस्टबिन भरा है। कृपया ${s} कदम ${d} चलकर अगले खाली डस्टबिन में डालें।`,
+  none:"आस-पास के सभी डस्टबिन भरे हैं। कृपया अभी कचरा साथ रखें। सफ़ाई दल को सूचना भेज दी गई है।",L:"बाईं ओर",R:"दाईं ओर",idle:"स्पीकर शांत है।"}
+};
+const L=()=>TXT[$('lang').value];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const tween=(ms,fn)=>new Promise(res=>{const t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/ms);fn(k);k<1?requestAnimationFrame(f):res()})(t0)});
+function log(s){const e=$('log');e.textContent+=`[${((performance.now()-T0)/1000).toFixed(1).padStart(5)}s] ${s}\n`;e.scrollTop=e.scrollHeight}
+const dist=f=>Math.round(8+(100-f)*0.52);
+const col=f=>f>=FULL?'var(--bad)':f>=70?'var(--warn)':'var(--ok)';
+
+function pick(type){const a=L()[type];let i;do{i=Math.floor(Math.random()*a.length)}while(a.length>1&&i===last[type]);last[type]=i;return [a[i],i]}
+function say(text,k,track){
+  $('msg').textContent=text;$('msg').className='';$('msgbar').dataset.k=k;
+  log(`[DFP] play track ${String(track).padStart(3,'0')}`);
+  $('waves').parentNode.classList.add('spk');$('c-sp').querySelector('b').textContent='Playing';
+  if($('snd').checked&&'speechSynthesis' in window){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=L().v;speechSynthesis.speak(u)}catch(e){}}
+  clearTimeout(sp);sp=setTimeout(()=>{$('bin').classList.remove('spk');$('c-sp').querySelector('b').textContent='Silent'},3000);
+}
+function render(){
+  [['gM','m',52,202],['gA','a',44,204],['gB','b',44,204]].forEach(([id,k,w,base])=>{const h=(id==='gM'?66:48)*F[k]/100,g=$(id);g.setAttribute('height',h);g.setAttribute('y',base-h);g.setAttribute('fill',col(F[k]))});
+  $('vM').textContent=F.m+'%';$('vA').textContent=F.a+'%';$('vB').textContent=F.b+'%';
+  $('c-us').querySelector('b').textContent=`${dist(F.m)} cm · ${F.m>=FULL?'FULL':'free'}`;
+  $('nT').textContent=S.t;$('nW').textContent=S.w;$('nI').textContent=S.i;$('nL').textContent=litter.length;
+  const n=[F.m,F.a,F.b].filter(f=>f>=FULL).length;
+  $('collect').innerHTML=`<b>Smart collection:</b> the truck visits ${n} of 3 bins and skips ${3-n}. Fewer trips, less diesel.`;
+}
+function chip(id,on,cls,text){const c=$(id);c.className='chip'+(on?' '+cls:'');c.querySelector('b').textContent=text}
+
+function announceFull(){
+  if(!pir)return;fullDone=true;
+  const c=[{k:'a',s:50,d:'L'},{k:'b',s:120,d:'R'}].filter(x=>{log(`[ESP-NOW] Bin ${x.k.toUpperCase()} fill ${F[x.k]}% → ${F[x.k]>=FULL?'full':'free'}`);return F[x.k]<FULL}).sort((a,b)=>a.s-b.s)[0];
+  route=c||null;
+  if(c)say(L().full(L()[c.d],c.s),'warn',7);else say(L().none,'bad',8);
+}
+function setPIR(v){
+  if(v===pir)return;pir=v;chip('c-pir',v,'on',v?'Person near':'Clear');$('pirdot').setAttribute('fill',v?'var(--warn)':'var(--mute)');
+  if(v){
+    nearAt=performance.now();thrown=warned=fullDone=false;log('[PIR] person detected, timer started');
+    if(F.m>=FULL)timers.push(setTimeout(announceFull,800));
+    else timers.push(setTimeout(()=>{if(pir&&!thrown&&!warned){warned=true;S.w++;const[t,i]=pick('warn');log('[LOGIC] 3 s near bin, no beam break → warning');say(t,'warn',4+i);render()}},WARN_T));
+  }else{
+    timers.forEach(clearTimeout);timers=[];const d=performance.now()-nearAt;log(`[PIR] person left after ${(d/1000).toFixed(1)} s`);
+    if(!thrown&&!warned&&!fullDone){S.i++;log('[LOGIC] short pass-by → stay silent')}
+    render();
+  }
+}
+function beam(v){
+  $('beam').classList.toggle('cut',v);chip('c-ir',v,'cut',v?'BROKEN':'Clear');
+  if(v){log('[IR] beam broken');if(pir&&!thrown){thrown=true;if(F.m<FULL){S.t++;const[t,i]=pick('thanks');say(t,'ok',1+i)}}}
+}
+function setP(x){px=x;$('person').setAttribute('transform',`translate(${x},0)`);setPIR(Math.abs(x-BX)<130)}
+async function moveTo(x,ms=1200){const a=px;await tween(ms,k=>setP(a+(x-a)*k))}
+async function throwIn(){
+  $('hand').style.display='none';const P=$('proj');P.style.display='';const sx=px+14,sy=172;
+  await tween(650,k=>{P.setAttribute('x',sx+(BX-4-sx)*k);P.setAttribute('y',sy+(112-sy)*k-55*Math.sin(Math.PI*k))});
+  beam(true);await tween(300,k=>{P.setAttribute('y',112+k*40);P.setAttribute('opacity',1-k)});
+  beam(false);P.style.display='none';P.setAttribute('opacity',1);F.m=Math.min(100,F.m+8);render();
+}
+function dropLitter(){
+  $('hand').style.display='none';const x=px+22,r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('class','lit');r.setAttribute('x',x);r.setAttribute('y',202);r.setAttribute('width',8);r.setAttribute('height',8);r.setAttribute('rx',2);
+  $('lit').appendChild(r);litter.push({x,r});log('[LOGIC] item fell outside (device cannot see this)');render();
+}
+const enter=async()=>{setP(-40);$('hand').style.display='';await moveTo(290,1600);await sleep(400)};
+const exitR=()=>moveTo(800,1200);
+const SC={
+ async throw(){if(F.m>=FULL)return SC.full();await enter();await throwIn();await sleep(1800);await exitR()},
+ async miss(){await enter();dropLitter();await sleep(2800);await exitR()},
+ async fix(){await enter();dropLitter();await sleep(3800);
+   const it=litter.pop();await moveTo(it.x-16,700);it.r.remove();$('hand').style.display='';render();
+   await moveTo(290,700);await sleep(200);await throwIn();await sleep(1800);await exitR()},
+ async pass(){setP(-40);await moveTo(800,1800)},
+ async full(){if(F.m<FULL){F.m=92;render()}await enter();await sleep(2600);
+   if(route)await moveTo(route.k==='a'?100:620,2600);else await exitR()}
+};
+async function run(name){
+  if(busy)return;busy=true;document.querySelectorAll('[data-s],#reset').forEach(b=>b.disabled=true);
+  try{await SC[name]()}finally{setP(-40);busy=false;document.querySelectorAll('[data-s],#reset').forEach(b=>b.disabled=false)}
+}
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>run(b.dataset.s));
+[['sM','m'],['sA','a'],['sB','b']].forEach(([id,k])=>$(id).oninput=e=>{F[k]=+e.target.value;render()});
+$('lang').onchange=()=>{if(!$('msgbar').dataset.k){$('msg').textContent=L().idle}};
+$('reset').onclick=()=>{litter.forEach(l=>l.r.remove());litter=[];S.t=S.w=S.i=0;F.m=30;F.a=20;F.b=50;
+  ['sM','sA','sB'].forEach((id,i)=>$(id).value=[30,20,50][i]);$('log').textContent='';$('msg').textContent=L().idle;$('msg').className='idle';$('msgbar').dataset.k='';render()};
+render();chip('c-ir',false,'cut','Clear');log('[BOOT] ESP32 ready, deep sleep until PIR wakes it');
+</script>
+</body>
+</html>
